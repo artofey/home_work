@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -16,6 +17,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("current time: %v\n", time.Now().Round(0))
-	log.Printf("exact time: %v\n", beevikTime.Round(0))
+	fmt.Printf("current time: %v\n", time.Now().Round(0))
+	fmt.Printf("exact time: %v\n", beevikTime.Round(0))
 }
