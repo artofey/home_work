@@ -1,4 +1,4 @@
-module github.com/artofey/hw01_hello_now
+module github.com/artofey/home_work/hw01_hello_now
 
 go 1.14
 
