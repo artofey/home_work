@@ -43,11 +43,16 @@ var text = `Как видите, он  спускается  по  лестни�
 	посидеть у огня и послушать какую-нибудь интересную сказку.
 		В этот вечер...`
 
+var shortText = `Словом,	 теперь 	мишку 	зовут Винни-Пух`
+
 func TestTop10(t *testing.T) {
 	t.Run("no words in empty string", func(t *testing.T) {
 		require.Len(t, Top10(""), 0)
 	})
-
+	t.Run("short text", func(t *testing.T) {
+		expected := []string{"Словом,", "теперь", "мишку", "зовут", "Винни-Пух"}
+		require.ElementsMatch(t, expected, Top10(shortText))
+	})
 	t.Run("positive test", func(t *testing.T) {
 		if taskWithAsteriskIsCompleted {
 			expected := []string{"он", "а", "и", "что", "ты", "не", "если", "то", "его", "кристофер", "робин", "в"}
