@@ -3,6 +3,7 @@ package hw03_frequency_analysis //nolint:golint,stylecheck
 import (
 	"sort"
 	"strings"
+	"unicode"
 )
 
 type TopWord struct {
@@ -13,37 +14,29 @@ type TopWord struct {
 // Top10 is getting top 10 words from text.
 func Top10(text string) []string {
 	if len(text) == 0 {
-		return []string{}
+		return nil
 	}
-	textSlice := strings.Split(text, "\t")
-	var b strings.Builder
-	for _, item := range textSlice {
-		b.WriteString(item)
-		b.WriteString(" ")
-	}
-	text = b.String()
-	textSlice = strings.Split(text, " ")
-	sort.SliceStable(textSlice, func(i, j int) bool { return textSlice[i] < textSlice[j] })
-	topWordSlice := []TopWord{}
-	var sLeft string
+	textSlice := strings.FieldsFunc(text, unicode.IsSpace)
+
+	topWords := map[string]int{}
 	for _, s := range textSlice {
 		s = strings.TrimSpace(s)
-		if s == "" {
-			continue
-		}
-		if sLeft == s {
-			topWordSlice[len(topWordSlice)-1].count++
+		_, ok := topWords[s]
+		if ok {
+			topWords[s]++
 		} else {
-			topWordSlice = append(topWordSlice, TopWord{1, s})
+			topWords[s] = 1
 		}
-		sLeft = s
 	}
+
+	topWordSlice := make([]TopWord, 0, len(topWords))
+	for k, v := range topWords {
+		topWordSlice = append(topWordSlice, TopWord{count: v, word: k})
+	}
+
 	sort.SliceStable(topWordSlice, func(i, j int) bool { return topWordSlice[i].count > topWordSlice[j].count })
-	res := []string{}
-	for i := 0; i <= 9; i++ {
-		if i > len(topWordSlice)-1 {
-			break
-		}
+	res := make([]string, 0, 10)
+	for i := 0; i <= 9 && i <= len(topWordSlice)-1; i++ {
 		res = append(res, topWordSlice[i].word)
 	}
 	return res
