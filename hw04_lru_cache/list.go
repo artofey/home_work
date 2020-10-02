@@ -18,7 +18,7 @@ type ListItem struct {
 }
 
 type list struct {
-	ListItem
+	l []ListItem
 }
 
 // Длина списка
@@ -37,12 +37,12 @@ func (list) Back() *ListItem {
 }
 
 // Добавить значение в начало
-func (list) PushFront(v interface{}) *ListItem {
+func (l list) PushFront(v interface{}) *ListItem {
 	return nil
 }
 
 // Добавить значение в конец
-func (list) PushBack(v interface{}) *ListItem {
+func (l list) PushBack(v interface{}) *ListItem {
 	return nil
 }
 
