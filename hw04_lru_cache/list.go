@@ -44,13 +44,15 @@ func (l *list) PushFront(v interface{}) *ListItem {
 	if l.count == 0 {
 		l.first = &newListItem
 		l.last = &newListItem
-		l.count++
-		return &newListItem
+	} else if l.count == 1 {
+		newListItem.Next = l.first
+		l.last.Prev = &newListItem
+		l.first = &newListItem
+	} else if l.count > 1 {
+		l.first.Prev = &newListItem
+		newListItem.Next = l.first
+		l.first = &newListItem
 	}
-	l.first.Prev = &newListItem
-
-	newListItem.Next = l.first
-	l.first = &newListItem
 	l.count++
 	return &newListItem
 }
