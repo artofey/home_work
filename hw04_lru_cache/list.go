@@ -23,22 +23,22 @@ type list struct {
 	last  *ListItem
 }
 
-// Длина списка
+// Длина списка.
 func (l *list) Len() int {
 	return l.count
 }
 
-// Первый элемент списка
+// Первый элемент списка.
 func (l *list) Front() *ListItem {
 	return l.first
 }
 
-// Последний элемент списка
+// Последний элемент списка.
 func (l *list) Back() *ListItem {
 	return l.last
 }
 
-// Добавить значение в начало
+// Добавить значение в начало.
 func (l *list) PushFront(v interface{}) *ListItem {
 	newListItem := ListItem{Value: v}
 	if l.count == 0 {
@@ -55,7 +55,7 @@ func (l *list) PushFront(v interface{}) *ListItem {
 	return &newListItem
 }
 
-// Добавить значение в конец
+// Добавить значение в конец.
 func (l *list) PushBack(v interface{}) *ListItem {
 	newListItem := ListItem{Value: v}
 	if l.count == 0 {
@@ -72,33 +72,44 @@ func (l *list) PushBack(v interface{}) *ListItem {
 	return &newListItem
 }
 
-// Удалить элемент
+// Удалить элемент.
 func (l *list) Remove(i *ListItem) {
 	if l.count <= 0 {
 		return
-	} else if l.count == 1 {
+	}
+	if l.count == 1 {
 		l.first = nil
 		l.last = nil
 		l.count--
-	} else {
+	} else if l.count > 1 {
 		if i.Next != nil && i.Prev != nil {
-			i.Prev, i.Next = i.Next, i.Prev
+			i.Prev.Next, i.Next.Prev = i.Next, i.Prev
 			l.count--
 		}
 	}
-
 }
 
-// Переместить элемент в начало
+// Переместить элемент в начало.
 func (l *list) MoveToFront(i *ListItem) {
 	if i == l.first {
 		return
 	}
-	iTemt := *i
-	i.Prev, i.Next = i.Next, i.Prev
 
+	// сохранить текущий элемент.
+	iTemt := *i
+	if i == l.last {
+		// сделать предыдущий элемент последним.
+		i.Prev.Next = nil
+		l.last = i.Prev
+	} else {
+		// изменить Next в предыдущем элементе на следующий.
+		// изменить Prev в следующем элементе на предыдущий.
+		i.Prev.Next, i.Next.Prev = i.Next, i.Prev
+	}
+	// сделать текущий элемент первым.
 	iTemt.Prev = nil
-	iTemt.Next = l.first.Next
+	iTemt.Next = l.first
+	l.first.Prev = &iTemt
 	l.first = &iTemt
 }
 
