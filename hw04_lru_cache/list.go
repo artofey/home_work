@@ -73,13 +73,33 @@ func (l *list) PushBack(v interface{}) *ListItem {
 }
 
 // Удалить элемент
-func (list) Remove(i *ListItem) {
+func (l *list) Remove(i *ListItem) {
+	if l.count <= 0 {
+		return
+	} else if l.count == 1 {
+		l.first = nil
+		l.last = nil
+		l.count--
+	} else {
+		if i.Next != nil && i.Prev != nil {
+			i.Prev, i.Next = i.Next, i.Prev
+			l.count--
+		}
+	}
 
 }
 
 // Переместить элемент в начало
-func (list) MoveToFront(i *ListItem) {
+func (l *list) MoveToFront(i *ListItem) {
+	if i == l.first {
+		return
+	}
+	iTemt := *i
+	i.Prev, i.Next = i.Next, i.Prev
 
+	iTemt.Prev = nil
+	iTemt.Next = l.first.Next
+	l.first = &iTemt
 }
 
 // NewList is ...
