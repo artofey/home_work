@@ -162,6 +162,20 @@ func TestList(t *testing.T) {
 		require.Equal(t, []int{20, 40, 30}, MakeNativeIntList(l, false))
 		require.Equal(t, []int{30, 40, 20}, MakeNativeIntList(l, true))
 	})
+
+	t.Run("remove", func(t *testing.T) {
+		l := NewList()
+		item50 := l.PushBack(50)
+		l.Remove(item50)
+		require.Nil(t, l.Back())
+		require.Nil(t, l.Front())
+		require.Equal(t, 0, l.Len())
+
+		l.Remove(item50)
+		require.Nil(t, l.Back())
+		require.Nil(t, l.Front())
+		require.Equal(t, 0, l.Len())
+	})
 }
 
 func MakeNativeIntList(l List, revert bool) []int {
