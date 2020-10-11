@@ -1,6 +1,6 @@
 package hw04_lru_cache //nolint:golint,stylecheck
 
-// Key is type of string
+// Key is type of string.
 type Key string
 
 // Cache is interface of cache.

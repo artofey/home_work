@@ -41,17 +41,20 @@ func (l *list) Back() *ListItem {
 // Добавить значение в начало.
 func (l *list) PushFront(v interface{}) *ListItem {
 	newListItem := ListItem{Value: v}
-	if l.count == 0 {
+	switch {
+	case l.count == 0:
 		l.first = &newListItem
 		l.last = &newListItem
-	} else if l.count == 1 {
+	case l.count == 1:
 		newListItem.Next = l.first
 		l.last.Prev = &newListItem
 		l.first = &newListItem
-	} else if l.count > 1 {
+	case l.count > 1:
 		l.first.Prev = &newListItem
 		newListItem.Next = l.first
 		l.first = &newListItem
+	default:
+		panic("count < 0")
 	}
 	l.count++
 	return &newListItem
@@ -60,29 +63,23 @@ func (l *list) PushFront(v interface{}) *ListItem {
 // Добавить значение в конец.
 func (l *list) PushBack(v interface{}) *ListItem {
 	newListItemP := &ListItem{Value: v}
-	if l.count == 0 {
+	switch {
+	case l.count == 0:
 		l.first = newListItemP
 		l.last = newListItemP
-		l.count++
-		return newListItemP
-	}
-	if l.count == 1 {
+	case l.count == 1:
 		l.first.Next = newListItemP
-
 		newListItemP.Prev = l.first
 		l.last = newListItemP
-		l.count++
-		return newListItemP
-	}
-	if l.count > 1 {
+	case l.count > 1:
 		l.last.Next = newListItemP
-
 		newListItemP.Prev = l.last
 		l.last = newListItemP
-		l.count++
-		return newListItemP
+	default:
+		panic("count < 0")
 	}
-	panic("count < 0")
+	l.count++
+	return newListItemP
 }
 
 // Удалить элемент.
