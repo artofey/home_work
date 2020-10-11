@@ -59,19 +59,30 @@ func (l *list) PushFront(v interface{}) *ListItem {
 
 // Добавить значение в конец.
 func (l *list) PushBack(v interface{}) *ListItem {
-	newListItem := ListItem{Value: v}
+	newListItemP := &ListItem{Value: v}
 	if l.count == 0 {
-		l.first = &newListItem
-		l.last = &newListItem
+		l.first = newListItemP
+		l.last = newListItemP
 		l.count++
-		return &newListItem
+		return newListItemP
 	}
-	l.last.Next = &newListItem
+	if l.count == 1 {
+		l.first.Next = newListItemP
 
-	newListItem.Prev = l.last
-	l.last = &newListItem
-	l.count++
-	return &newListItem
+		newListItemP.Prev = l.first
+		l.last = newListItemP
+		l.count++
+		return newListItemP
+	}
+	if l.count > 1 {
+		l.last.Next = newListItemP
+
+		newListItemP.Prev = l.last
+		l.last = newListItemP
+		l.count++
+		return newListItemP
+	}
+	panic("count < 0")
 }
 
 // Удалить элемент.
@@ -96,23 +107,21 @@ func (l *list) MoveToFront(i *ListItem) {
 	if i == l.first {
 		return
 	}
-
-	// сохранить текущий элемент.
-	iTemt := *i
+	iPrev := i.Prev
 	if i == l.last {
-		// сделать предыдущий элемент последним.
-		i.Prev.Next = nil
-		l.last = i.Prev
+		// делаем предыдущий последним
+		iPrev.Next = nil
+		l.last = iPrev
 	} else {
-		// изменить Next в предыдущем элементе на следующий.
-		// изменить Prev в следующем элементе на предыдущий.
-		i.Prev.Next, i.Next.Prev = i.Next, i.Prev
+		// соединяем предыдущий со следующим
+		iPrev.Next = i.Next
+		i.Next.Prev = iPrev
 	}
-	// сделать текущий элемент первым.
-	iTemt.Prev = nil
-	iTemt.Next = l.first
-	l.first.Prev = &iTemt
-	l.first = &iTemt
+	// делаем элемент первым
+	i.Prev = nil
+	i.Next = l.first
+	l.first.Prev = i
+	l.first = i // перезаписали первого
 }
 
 // NewList is ...
