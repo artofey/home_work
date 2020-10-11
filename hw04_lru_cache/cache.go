@@ -1,5 +1,9 @@
 package hw04_lru_cache //nolint:golint,stylecheck
 
+import (
+	"sync"
+)
+
 // Key is type of string.
 type Key string
 
@@ -11,6 +15,7 @@ type Cache interface {
 }
 
 type lruCache struct {
+	mu       sync.Mutex
 	capacity int
 	queue    List
 	items    map[Key]*ListItem
@@ -22,6 +27,8 @@ type cacheItem struct {
 }
 
 func (c *lruCache) Set(key Key, value interface{}) bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	item, ok := c.items[key]
 	if ok {
 		item.Value = cacheItem{key, value}
@@ -41,6 +48,8 @@ func (c *lruCache) Set(key Key, value interface{}) bool {
 }
 
 func (c *lruCache) Get(key Key) (interface{}, bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	item, ok := c.items[key]
 	if ok {
 		c.queue.MoveToFront(item)
@@ -50,7 +59,8 @@ func (c *lruCache) Get(key Key) (interface{}, bool) {
 }
 
 func (c *lruCache) Clear() {
-
+	c.items = make(map[Key]*ListItem)
+	c.queue = NewList()
 }
 
 // NewCache make a new chache instance.
