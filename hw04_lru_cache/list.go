@@ -85,7 +85,7 @@ func (l *list) PushBack(v interface{}) *ListItem {
 // Удалить элемент.
 func (l *list) Remove(i *ListItem) {
 	switch {
-	case i == l.first && i == l.last: // is only one
+	case l.first == i && l.last == i: // is only one
 		l.first = nil
 		l.last = nil
 	case i == l.first: // is first
