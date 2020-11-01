@@ -8,7 +8,32 @@ type (
 
 type Stage func(in In) (out Out)
 
+func doneStreamer(done In, in In) Out {
+	out := make(Bi)
+	go func() {
+		defer close(out)
+		select {
+		case <-done:
+			return
+		default:
+		}
+
+		for v := range in {
+			select {
+			case <-done:
+				return
+			case out <- v:
+			}
+		}
+	}()
+	return out
+}
+
 func ExecutePipeline(in In, done In, stages ...Stage) Out {
-	// Place your code here
-	return nil
+	inSt := doneStreamer(done, in)
+
+	for _, stage := range stages {
+		inSt = stage(inSt)
+	}
+	return inSt
 }
