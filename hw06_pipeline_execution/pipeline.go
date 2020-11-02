@@ -6,23 +6,27 @@ type (
 	Bi  = chan interface{}
 )
 
+// Stage ...
 type Stage func(in In) (out Out)
 
 func doneStreamer(done In, in In) Out {
 	out := make(Bi)
 	go func() {
 		defer close(out)
-		select {
-		case <-done:
-			return
-		default:
-		}
 
-		for v := range in {
+		for {
 			select {
 			case <-done:
 				return
-			case out <- v:
+			case i, ok := <-in:
+				if !ok {
+					return
+				}
+				select {
+				case <-done:
+					return
+				case out <- i:
+				}
 			}
 		}
 	}()
@@ -30,10 +34,8 @@ func doneStreamer(done In, in In) Out {
 }
 
 func ExecutePipeline(in In, done In, stages ...Stage) Out {
-	inSt := doneStreamer(done, in)
-
 	for _, stage := range stages {
-		inSt = stage(inSt)
+		in = stage(doneStreamer(done, in))
 	}
-	return inSt
+	return in
 }
