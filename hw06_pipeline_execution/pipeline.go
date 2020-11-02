@@ -33,6 +33,7 @@ func doneStreamer(done In, in In) Out {
 	return out
 }
 
+// ExecutePipeline ...
 func ExecutePipeline(in In, done In, stages ...Stage) Out {
 	for _, stage := range stages {
 		in = stage(doneStreamer(done, in))
