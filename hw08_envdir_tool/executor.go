@@ -7,10 +7,12 @@ import (
 	"strconv"
 )
 
-// RunCmd runs a command + arguments (cmd) with environment variables from env
+// RunCmd runs a command + arguments (cmd) with environment variables from env.
 func RunCmd(cmd []string, env Environment) (returnCode int) {
-	// Place your code here
-	c := exec.Command(cmd[0], cmd[1:]...)
+	command := cmd[0]
+	var args []string
+	args = append(args, cmd[1:]...)
+	c := exec.Command(command, args...)
 	c.Stderr = os.Stderr
 	c.Stdin = os.Stdin
 	c.Stdout = os.Stdout
