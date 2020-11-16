@@ -16,7 +16,7 @@ func prepareEnvVal(s string) string {
 	// Удалить пробельные символы справа.
 	text := strings.TrimRightFunc(s, unicode.IsSpace)
 	// Удалить двойные кавычки.
-	text = strings.TrimFunc(text, func(r rune) bool { return r == '"' })
+	// text = strings.TrimFunc(text, func(r rune) bool { return r == '"' })
 	// Зафменить терминальные нули на перевод строки.
 	return string(bytes.ReplaceAll([]byte(text), []byte{'\x00'}, []byte("\n")))
 }

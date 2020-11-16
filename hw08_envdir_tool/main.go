@@ -16,6 +16,9 @@ func main() {
 	envDir := args[0]
 	command := args[1:]
 	env, err := ReadDir(envDir)
+	// for key, val := range env {
+	// 	fmt.Printf("%v: %v\n", key, val)
+	// }
 	if err != nil {
 		log.Fatal(err)
 	}
