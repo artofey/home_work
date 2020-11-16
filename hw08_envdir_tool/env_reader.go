@@ -2,13 +2,24 @@ package main
 
 import (
 	"bufio"
-	"fmt"
+	"bytes"
 	"io/ioutil"
 	"os"
+	"strings"
+	"unicode"
 )
 
 // Environment is map of OS environments.
 type Environment map[string]string
+
+func prepareEnvVal(s string) string {
+	// Удалить пробельные символы справа.
+	text := strings.TrimRightFunc(s, unicode.IsSpace)
+	// Удалить двойные кавычки.
+	text = strings.TrimFunc(text, func(r rune) bool { return r == '"' })
+	// Зафменить терминальные нули на перевод строки.
+	return string(bytes.ReplaceAll([]byte(text), []byte{'\x00'}, []byte("\n")))
+}
 
 func getEnvValue(fileName string) (string, error) {
 	file, err := os.Open(fileName)
@@ -19,11 +30,10 @@ func getEnvValue(fileName string) (string, error) {
 
 	scanner := bufio.NewScanner(file)
 	scanner.Scan()
-	fmt.Println(fileName, scanner.Text())
 	if err := scanner.Err(); err != nil {
-		fmt.Println(err)
+		return "", nil
 	}
-	return "", nil
+	return prepareEnvVal(scanner.Text()), nil
 }
 
 // ReadDir reads a specified directory and returns map of env variables.
@@ -36,14 +46,16 @@ func ReadDir(dir string) (Environment, error) {
 	}
 
 	for _, file := range files {
-		if file.IsDir() {
+		if file.IsDir() || strings.ContainsRune(file.Name(), '=') {
 			continue
 		}
 		envVal, err := getEnvValue(dir + "/" + file.Name())
 		if err != nil {
 			return nil, err
 		}
-		envs[file.Name()] = envVal
+		if envVal != "" {
+			envs[file.Name()] = envVal
+		}
 	}
 	return envs, nil
 }
