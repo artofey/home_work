@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -11,7 +10,7 @@ import (
 // RunCmd runs a command + arguments (cmd) with environment variables from env
 func RunCmd(cmd []string, env Environment) (returnCode int) {
 	// Place your code here
-	c := exec.Command(cmd[0], cmd[0:]...)
+	c := exec.Command(cmd[0], cmd[1:]...)
 	c.Stderr = os.Stderr
 	c.Stdin = os.Stdin
 	c.Stdout = os.Stdout
@@ -31,9 +30,10 @@ func RunCmd(cmd []string, env Environment) (returnCode int) {
 		log.Fatal(err)
 	}
 	err = c.Wait()
+	// fmt.Println(os.Environ())
 	if err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
-			fmt.Println(exitErr.Error())
+			// fmt.Println(exitErr.Error())
 			code, _ := strconv.Atoi(exitErr.Error())
 			return code
 		}
