@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"os"
 	"os/exec"
@@ -22,6 +23,9 @@ func RunCmd(cmd []string, env Environment) (returnCode int) {
 		if err != nil {
 			log.Fatal(err)
 		}
+		if val == "" {
+			continue
+		}
 		err = os.Setenv(key, val)
 		if err != nil {
 			log.Fatal(err)
@@ -32,10 +36,9 @@ func RunCmd(cmd []string, env Environment) (returnCode int) {
 		log.Fatal(err)
 	}
 	err = c.Wait()
-	// fmt.Println(os.Environ())
 	if err != nil {
-		if exitErr, ok := err.(*exec.ExitError); ok {
-			// fmt.Println(exitErr.Error())
+		var exitErr *exec.ExitError
+		if ok := errors.As(err, &exitErr); ok {
 			code, _ := strconv.Atoi(exitErr.Error())
 			return code
 		}
