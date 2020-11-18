@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -24,7 +25,7 @@ func prepareEnvVal(s string) string {
 func getEnvValue(fileName string) (string, error) {
 	file, err := os.Open(fileName)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("opening file %v raised error: %w", fileName, err)
 	}
 	defer file.Close()
 
@@ -42,7 +43,7 @@ func ReadDir(dir string) (Environment, error) {
 	envs := make(Environment)
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("reading directory %v raised error: %w", dir, err)
 	}
 
 	for _, file := range files {
@@ -53,9 +54,7 @@ func ReadDir(dir string) (Environment, error) {
 		if err != nil {
 			return nil, err
 		}
-		if envVal != "" {
-			envs[file.Name()] = envVal
-		}
+		envs[file.Name()] = envVal
 	}
 	return envs, nil
 }

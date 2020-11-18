@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -11,11 +13,17 @@ import (
 type testCase struct {
 	input    string
 	expected Environment
-	err      interface{}
+	err      error
 }
 
 func errCheck(e error) {
 	if e != nil {
+		fmt.Println(e)
+	}
+}
+
+func errCheckExist(e error) {
+	if e != nil && !errors.Is(e, os.ErrExist) {
 		panic(e)
 	}
 }
@@ -24,7 +32,7 @@ func errCheck(e error) {
 func makeTestData() {
 	td := "testdata/envequal"
 	err := os.Mkdir(td, 0777)
-	errCheck(err)
+	errCheckExist(err)
 
 	err = os.Chdir(td)
 	errCheck(err)
@@ -36,7 +44,7 @@ func makeTestData() {
 	}
 	for fileName, val := range cases {
 		err = ioutil.WriteFile(fileName, []byte(val), 0777)
-		errCheck(err)
+		errCheckExist(err)
 	}
 	err = os.Chdir("../..")
 	errCheck(err)
@@ -49,11 +57,12 @@ func removeTestData() {
 
 func TestReadDir(t *testing.T) {
 	makeTestData()
+	var pe *os.PathError
 	testCases := []testCase{
 		{
 			input:    "testdata/nodir",
 			expected: nil,
-			err:      &os.PathError{},
+			err:      pe,
 		},
 		{
 			input: "testdata/envequal",
@@ -66,6 +75,7 @@ func TestReadDir(t *testing.T) {
 			expected: Environment{
 				"BAR":   "bar",
 				"HELLO": "\"hello\"",
+				"UNSET": "",
 				"FOO": `   foo
 with new line`,
 			},
@@ -77,7 +87,7 @@ with new line`,
 			res, err := ReadDir(test.input)
 
 			require.Equal(t, test.expected, res)
-			require.IsType(t, test.err, err)
+			require.True(t, errors.Is(err, test.err))
 		})
 	}
 	removeTestData()
@@ -88,9 +98,9 @@ func TestPrepareEnvVal(t *testing.T) {
 		"right_tab\t":  "right_tab",
 		"right_space ": "right_space",
 		"simple":       "simple",
-		// `"tests"`:      "tests",
-		"":           "",
-		"111\x00111": "111\n111",
+		`"tests"`:      `"tests"`,
+		"":             "",
+		"111\x00111":   "111\n111",
 	}
 
 	for input, expected := range testCases {
