@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -10,6 +11,10 @@ import (
 
 // RunCmd runs a command + arguments (cmd) with environment variables from env.
 func RunCmd(cmd []string, env Environment) (returnCode int) {
+	if len(cmd) == 0 {
+		fmt.Println("Example for run command:\ngo-envdir /path/to/env/dir command arg1 arg2")
+		return 1
+	}
 	command := cmd[0]
 	var args []string
 	args = append(args, cmd[1:]...)
