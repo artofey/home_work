@@ -56,14 +56,14 @@ func removeTestData() {
 }
 
 func TestReadDir(t *testing.T) {
+	t.Run("if dir not exist", func(t *testing.T) {
+		_, err := ReadDir("testdata/nodir")
+		var pe *os.PathError
+		require.True(t, errors.As(err, &pe))
+	})
+
 	makeTestData()
-	var pe *os.PathError
 	testCases := []testCase{
-		{
-			input:    "testdata/nodir",
-			expected: nil,
-			err:      pe,
-		},
 		{
 			input: "testdata/envequal",
 			expected: Environment{
@@ -87,7 +87,8 @@ with new line`,
 			res, err := ReadDir(test.input)
 
 			require.Equal(t, test.expected, res)
-			require.True(t, errors.Is(err, test.err))
+			require.True(t, errors.Is(test.err, err))
+			require.NoError(t, err)
 		})
 	}
 	removeTestData()
