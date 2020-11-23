@@ -42,6 +42,30 @@ func getEnvValue(fileName string) (string, error) {
 	return prepareEnvVal(scanner.Text()), nil
 }
 
+func prepareEnvVal(s string) string {
+	// Удалить пробельные символы справа.
+	text := strings.TrimRightFunc(s, unicode.IsSpace)
+	// Удалить двойные кавычки.
+	// text = strings.TrimFunc(text, func(r rune) bool { return r == '"' })
+	// Зафменить терминальные нули на перевод строки.
+	return string(bytes.ReplaceAll([]byte(text), []byte{'\x00'}, []byte("\n")))
+}
+
+func getEnvValue(fileName string) (string, error) {
+	file, err := os.Open(fileName)
+	if err != nil {
+		return "", fmt.Errorf("opening file %v raised error: %w", fileName, err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	scanner.Scan()
+	if err := scanner.Err(); err != nil {
+		return "", nil
+	}
+	return prepareEnvVal(scanner.Text()), nil
+}
+
 // ReadDir reads a specified directory and returns map of env variables.
 // Variables represented as files where filename is name of variable, file first line is a value.
 func ReadDir(dir string) (Environment, error) {
