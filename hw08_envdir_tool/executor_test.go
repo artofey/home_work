@@ -14,12 +14,12 @@ type cmdCases struct {
 }
 
 type envCases struct {
-	inEnv       Environment
-	expectedEnv Environment
+	inEnvs      Environment
+	expectedEnv map[string]string
 }
 
-func getCurrentEnvs(envs Environment) Environment {
-	currentEnvs := make(Environment)
+func getCurrentEnvs(envs Environment) map[string]string {
+	currentEnvs := make(map[string]string)
 	for nameEnv := range envs {
 		if v, ok := os.LookupEnv(nameEnv); ok {
 			currentEnvs[nameEnv] = v
@@ -29,7 +29,6 @@ func getCurrentEnvs(envs Environment) Environment {
 }
 
 func TestRunCmd(t *testing.T) {
-	// t.Skip()
 	t.Run("test envs", func(t *testing.T) {
 		// Установка плохих значений.
 		os.Setenv("HELLO", "SHOULD_REPLACE")
@@ -38,34 +37,28 @@ func TestRunCmd(t *testing.T) {
 
 		tests := []envCases{
 			{
-				inEnv: Environment{
-					"BAR":   "bar",
-					"FOO":   "  foo\nwith new line",
-					"UNSET": "",
+				inEnvs: Environment{
+					"BAR":   EnvValue{"bar", false},
+					"FOO":   EnvValue{"  foo\nwith new line", false},
+					"UNSET": EnvValue{"", true},
 				},
-				expectedEnv: Environment{
+				expectedEnv: map[string]string{
 					"BAR": "bar",
 					"FOO": "  foo\nwith new line",
 				},
 			},
 			{
-				inEnv:       Environment{},
-				expectedEnv: Environment{},
+				inEnvs:      Environment{},
+				expectedEnv: make(map[string]string),
 			},
 		}
 		for i, test := range tests {
 			t.Run(strconv.Itoa(i), func(t *testing.T) {
 				cmd := []string{"pwd"}
-				code := RunCmd(cmd, test.inEnv)
+				code := RunCmd(cmd, test.inEnvs)
 				require.Equal(t, 0, code)
-				require.Equal(t, test.expectedEnv, getCurrentEnvs(test.inEnv))
+				require.Equal(t, test.expectedEnv, getCurrentEnvs(test.inEnvs))
 			})
 		}
-	})
-
-	t.Run("without args", func(t *testing.T) {
-		code := RunCmd([]string{}, Environment{})
-		require.Equal(t, 1, code)
-
 	})
 }

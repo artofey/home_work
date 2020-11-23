@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 	"unicode"
 )
@@ -18,68 +19,48 @@ type EnvValue struct {
 	NeedRemove bool
 }
 
-func prepareEnvVal(s string) string {
+func prepareEnvVal(b []byte) EnvValue {
+	var ev EnvValue
 	// Удалить пробельные символы справа.
-	text := strings.TrimRightFunc(s, unicode.IsSpace)
-	// Удалить двойные кавычки.
-	// text = strings.TrimFunc(text, func(r rune) bool { return r == '"' })
+	b = bytes.TrimRightFunc(b, unicode.IsSpace)
 	// Зафменить терминальные нули на перевод строки.
-	return string(bytes.ReplaceAll([]byte(text), []byte{'\x00'}, []byte("\n")))
+	b = bytes.ReplaceAll(b, []byte{'\x00'}, []byte("\n"))
+	if len(b) == 0 {
+		ev.NeedRemove = true
+	}
+	ev.Value = string(b)
+	return ev
 }
 
-func getEnvValue(fileName string) (string, error) {
+func getEnvValue(fileName string) (EnvValue, error) {
 	file, err := os.Open(fileName)
 	if err != nil {
-		return "", fmt.Errorf("opening file %v raised error: %w", fileName, err)
+		return EnvValue{}, fmt.Errorf("opening file %v raised error: %w", fileName, err)
 	}
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
 	scanner.Scan()
 	if err := scanner.Err(); err != nil {
-		return "", nil
+		return EnvValue{}, fmt.Errorf("reading file %v raised error: %w", fileName, err)
 	}
-	return prepareEnvVal(scanner.Text()), nil
-}
-
-func prepareEnvVal(s string) string {
-	// Удалить пробельные символы справа.
-	text := strings.TrimRightFunc(s, unicode.IsSpace)
-	// Удалить двойные кавычки.
-	// text = strings.TrimFunc(text, func(r rune) bool { return r == '"' })
-	// Зафменить терминальные нули на перевод строки.
-	return string(bytes.ReplaceAll([]byte(text), []byte{'\x00'}, []byte("\n")))
-}
-
-func getEnvValue(fileName string) (string, error) {
-	file, err := os.Open(fileName)
-	if err != nil {
-		return "", fmt.Errorf("opening file %v raised error: %w", fileName, err)
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	scanner.Scan()
-	if err := scanner.Err(); err != nil {
-		return "", nil
-	}
-	return prepareEnvVal(scanner.Text()), nil
+	return prepareEnvVal(scanner.Bytes()), nil
 }
 
 // ReadDir reads a specified directory and returns map of env variables.
 // Variables represented as files where filename is name of variable, file first line is a value.
 func ReadDir(dir string) (Environment, error) {
-	envs := make(Environment)
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
 		return nil, fmt.Errorf("reading directory %v raised error: %w", dir, err)
 	}
+	envs := make(Environment, len(files))
 
 	for _, file := range files {
 		if file.IsDir() || strings.ContainsRune(file.Name(), '=') {
 			continue
 		}
-		envVal, err := getEnvValue(dir + "/" + file.Name())
+		envVal, err := getEnvValue(filepath.Join(dir, file.Name()))
 		if err != nil {
 			return nil, err
 		}

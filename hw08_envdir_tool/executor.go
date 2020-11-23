@@ -2,19 +2,13 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"os"
 	"os/exec"
-	"strconv"
 )
 
 // RunCmd runs a command + arguments (cmd) with environment variables from env.
 func RunCmd(cmd []string, env Environment) (returnCode int) {
-	if len(cmd) == 0 {
-		fmt.Println("Example for run command:\ngo-envdir /path/to/env/dir command arg1 arg2")
-		return 1
-	}
 	command := cmd[0]
 	var args []string
 	args = append(args, cmd[1:]...)
@@ -24,14 +18,14 @@ func RunCmd(cmd []string, env Environment) (returnCode int) {
 	c.Stdout = os.Stdout
 
 	for key, val := range env {
-		err := os.Unsetenv(key)
-		if err != nil {
-			log.Fatal(err)
-		}
-		if val == "" {
+		if val.NeedRemove {
+			err := os.Unsetenv(key)
+			if err != nil {
+				log.Fatal(err)
+			}
 			continue
 		}
-		err = os.Setenv(key, val)
+		err := os.Setenv(key, val.Value)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -44,8 +38,7 @@ func RunCmd(cmd []string, env Environment) (returnCode int) {
 	if err != nil {
 		var exitErr *exec.ExitError
 		if ok := errors.As(err, &exitErr); ok {
-			code, _ := strconv.Atoi(exitErr.Error())
-			return code
+			return exitErr.ExitCode()
 		}
 	}
 	return 0

@@ -67,17 +67,18 @@ func TestReadDir(t *testing.T) {
 		{
 			input: "testdata/envequal",
 			expected: Environment{
-				"HELLO": "3",
+				"HELLO": EnvValue{"3", false},
 			},
 		},
 		{
 			input: "testdata/env",
 			expected: Environment{
-				"BAR":   "bar",
-				"HELLO": "\"hello\"",
-				"UNSET": "",
-				"FOO": `   foo
-with new line`,
+				"BAR":   EnvValue{"bar", false},
+				"EMPTY": EnvValue{"", true},
+				"HELLO": EnvValue{"\"hello\"", false},
+				"UNSET": EnvValue{"", true},
+				"FOO": EnvValue{`   foo
+with new line`, false},
 			},
 		},
 	}
@@ -85,7 +86,6 @@ with new line`,
 	for _, test := range testCases {
 		t.Run(test.input, func(t *testing.T) {
 			res, err := ReadDir(test.input)
-
 			require.Equal(t, test.expected, res)
 			require.True(t, errors.Is(test.err, err))
 			require.NoError(t, err)
@@ -95,19 +95,19 @@ with new line`,
 }
 
 func TestPrepareEnvVal(t *testing.T) {
-	testCases := map[string]string{
-		"right_tab\t":  "right_tab",
-		"right_space ": "right_space",
-		"simple":       "simple",
-		`"tests"`:      `"tests"`,
-		"":             "",
-		"111\x00111":   "111\n111",
+	testCases := map[string]EnvValue{
+		"right_tab\t":  EnvValue{"right_tab", false},
+		"right_space ": EnvValue{"right_space", false},
+		"simple":       EnvValue{"simple", false},
+		`"tests"`:      EnvValue{`"tests"`, false},
+		"":             EnvValue{"", true},
+		"111\x00111":   EnvValue{"111\n111", false},
 	}
 
 	for input, expected := range testCases {
 
 		t.Run(input, func(t *testing.T) {
-			result := prepareEnvVal(input)
+			result := prepareEnvVal([]byte(input))
 			require.Equal(t, expected, result)
 		})
 	}
