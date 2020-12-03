@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"time"
 )
@@ -43,7 +42,7 @@ type telnetClient struct {
 func (c *telnetClient) Connect() error {
 	c.ctx, c.cancel = context.WithTimeout(
 		context.Background(),
-		time.Duration(timeout)*time.Second,
+		c.timeout,
 	)
 
 	var err error
@@ -56,54 +55,61 @@ func (c *telnetClient) Connect() error {
 }
 
 func (c *telnetClient) Close() error {
+	fmt.Fprintln(c.out, "Client is Closed.")
 	c.cancel()
 	return nil
 }
 
 func (c *telnetClient) Send() error {
-	return nil
-}
-
-func (c *telnetClient) Receive() error {
-	return nil
-}
-
-func (c *telnetClient) readRoutine() {
-	scanner := bufio.NewScanner(c.conn)
-OUTER:
-	for {
-		select {
-		case <-c.ctx.Done():
-			break OUTER
-		default:
-			if !scanner.Scan() {
-				log.Printf("CANNOT SCAN")
-				break OUTER
-			}
-			text := scanner.Text()
-			log.Printf("From server: %s", text)
-		}
-	}
-	log.Printf("Finished readRoutine")
-}
-
-func (c *telnetClient) writeRoutine() {
 	scanner := bufio.NewScanner(c.in)
+	defer c.Close()
 OUTER:
 	for {
 		select {
 		case <-c.ctx.Done():
+			fmt.Fprintln(c.out, "Sender DONE")
 			break OUTER
 		default:
 			if !scanner.Scan() {
+				fmt.Fprintln(c.out, "Not Scan. EOF.")
+				if err := scanner.Err(); err != nil {
+					fmt.Fprintf(c.out, "Sender Scan Error: %v\n", err)
+				}
 				break OUTER
 			}
 			str := scanner.Text()
-			log.Printf("To server %v\n", str)
+			fmt.Fprintf(c.out, "To server %v\n", str)
 
 			c.conn.Write([]byte(fmt.Sprintf("%s\n", str)))
 		}
 
 	}
-	log.Printf("Finished writeRoutine")
+	fmt.Fprintln(c.out, "Finished Sender")
+	return nil
+}
+
+func (c *telnetClient) Receive() error {
+	scanner := bufio.NewScanner(c.conn)
+	defer c.Close()
+OUTER:
+	for {
+		select {
+		case <-c.ctx.Done():
+			fmt.Fprintln(c.out, "Receiver DONE")
+			break OUTER
+		default:
+			if !scanner.Scan() {
+				fmt.Fprintln(c.out, "CANNOT SCAN")
+				if err := scanner.Err(); err != nil {
+					fmt.Fprintf(c.out, "Receiver Scan Error: %v\n", err)
+				}
+				break OUTER
+			}
+			text := scanner.Text()
+
+			fmt.Fprintf(c.out, "From server: %s\n", text)
+		}
+	}
+	fmt.Fprintln(c.out, "Finished Receiver")
+	return nil
 }

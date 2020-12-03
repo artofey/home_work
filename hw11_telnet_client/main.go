@@ -6,6 +6,9 @@ import (
 	"log"
 	"net"
 	"os"
+	"os/signal"
+	"sync"
+	"syscall"
 	"time"
 )
 
@@ -19,6 +22,9 @@ func init() {
 	flag.Parse()
 
 	host = flag.Arg(0)
+	if host == "" {
+		log.Fatal("укажите адрес подключения")
+	}
 	if flag.Arg(1) == "" {
 		port = "23"
 	} else {
@@ -28,17 +34,34 @@ func init() {
 }
 
 func main() {
-	client := NewTelnetClient(address, time.Duration(timeout), os.Stdin, os.Stdout)
+	client := NewTelnetClient(address, time.Duration(timeout)*time.Second, os.Stdin, os.Stdout)
 	err := client.Connect()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(fmt.Errorf("Connection error %w", err))
 	}
 	defer func() {
 		if err := client.Close(); err != nil {
-			log.Fatal(err)
+			log.Println(err)
 		}
 	}()
+	var wg sync.WaitGroup
+	go func() {
+		wg.Add(1)
+		client.Send()
+		wg.Done()
+	}()
+	go func() {
+		wg.Add(1)
+		client.Receive()
+		wg.Done()
+	}()
 
-	time.Sleep(1 * time.Minute)
-	fmt.Println("Exita app.")
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, syscall.SIGINT)
+	go func() {
+		<-c
+		fmt.Println(" Exit app.")
+		client.Close()
+	}()
+	wg.Wait()
 }
