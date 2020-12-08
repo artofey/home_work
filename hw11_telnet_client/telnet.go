@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"io"
 	"net"
@@ -24,7 +23,7 @@ func NewTelnetClient(address string, timeout time.Duration, in io.ReadCloser, ou
 		timeout: timeout,
 		in:      in,
 		out:     out,
-		dealer:  net.Dialer{},
+		doneCh:  make(chan struct{}),
 	}
 }
 
@@ -33,43 +32,35 @@ type telnetClient struct {
 	timeout time.Duration
 	in      io.ReadCloser
 	out     io.Writer
-	dealer  net.Dialer
-	ctx     context.Context
+	doneCh  chan struct{}
 	conn    net.Conn
-	cancel  context.CancelFunc
 }
 
 func (c *telnetClient) Connect() error {
-	c.ctx, c.cancel = context.WithTimeout(
-		context.Background(),
-		c.timeout,
-	)
-
 	var err error
-	c.conn, err = c.dealer.DialContext(c.ctx, "tcp", c.address)
+	c.conn, err = net.DialTimeout("tcp", c.address, c.timeout)
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
 func (c *telnetClient) Close() error {
 	fmt.Fprintln(c.out, "Client is Closed.")
-	c.cancel()
-	return nil
+	close(c.doneCh)
+	return c.conn.Close()
 }
 
 func (c *telnetClient) Send() error {
 	scanner := bufio.NewScanner(c.in)
-	defer c.Close()
 OUTER:
 	for {
 		select {
-		case <-c.ctx.Done():
+		case <-c.doneCh:
 			fmt.Fprintln(c.out, "Sender DONE")
 			break OUTER
 		default:
+			fmt.Fprintln(c.out, "try scan (Send)")
 			if !scanner.Scan() {
 				fmt.Fprintln(c.out, "Not Scan. EOF.")
 				if err := scanner.Err(); err != nil {
@@ -77,12 +68,15 @@ OUTER:
 				}
 				break OUTER
 			}
+			fmt.Fprintln(c.out, "pre scan text")
 			str := scanner.Text()
 			fmt.Fprintf(c.out, "To server %v\n", str)
 
-			c.conn.Write([]byte(fmt.Sprintf("%s\n", str)))
+			_, err := c.conn.Write([]byte(fmt.Sprintf("%s\n", str)))
+			if err != nil {
+				fmt.Fprintf(c.out, "Sender Write Error: %v\n", err)
+			}
 		}
-
 	}
 	fmt.Fprintln(c.out, "Finished Sender")
 	return nil
@@ -90,14 +84,14 @@ OUTER:
 
 func (c *telnetClient) Receive() error {
 	scanner := bufio.NewScanner(c.conn)
-	defer c.Close()
 OUTER:
 	for {
 		select {
-		case <-c.ctx.Done():
+		case <-c.doneCh:
 			fmt.Fprintln(c.out, "Receiver DONE")
 			break OUTER
 		default:
+			fmt.Fprintln(c.out, "try scan (Receive)")
 			if !scanner.Scan() {
 				fmt.Fprintln(c.out, "CANNOT SCAN")
 				if err := scanner.Err(); err != nil {

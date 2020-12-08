@@ -37,22 +37,25 @@ func main() {
 	client := NewTelnetClient(address, time.Duration(timeout)*time.Second, os.Stdin, os.Stdout)
 	err := client.Connect()
 	if err != nil {
-		log.Fatal(fmt.Errorf("Connection error %w", err))
+		log.Fatal(fmt.Errorf("onnection error %w", err))
 	}
-	defer func() {
-		if err := client.Close(); err != nil {
+	// defer func() {
+	// 	if err := client.Close(); err != nil {
+	// 		log.Println(err)
+	// 	}
+	// }()
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		if err := client.Send(); err != nil {
 			log.Println(err)
 		}
-	}()
-	var wg sync.WaitGroup
-	go func() {
-		wg.Add(1)
-		client.Send()
 		wg.Done()
 	}()
 	go func() {
-		wg.Add(1)
-		client.Receive()
+		if err := client.Receive(); err != nil {
+			log.Println(err)
+		}
 		wg.Done()
 	}()
 
