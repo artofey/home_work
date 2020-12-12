@@ -7,16 +7,20 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/spf13/viper"
+
 	"github.com/artofey/home_work/hw12_13_14_15_calendar/internal/app"
 	"github.com/artofey/home_work/hw12_13_14_15_calendar/internal/logger"
 	internalhttp "github.com/artofey/home_work/hw12_13_14_15_calendar/internal/server/http"
 	memorystorage "github.com/artofey/home_work/hw12_13_14_15_calendar/internal/storage/memory"
 )
 
+const defaultConfigFile = "/etc/calendar/config.toml"
+
 var configFile string
 
 func init() {
-	flag.StringVar(&configFile, "config", "/etc/calendar/config.toml", "Path to configuration file")
+	flag.StringVar(&configFile, "config", defaultConfigFile, "Path to configuration file")
 }
 
 func main() {
@@ -27,8 +31,10 @@ func main() {
 		return
 	}
 
-	config := NewConfig()
-	logg := logger.New(config.Logger.Level)
+	if err := InitConfig(); err != nil {
+		panic(err)
+	}
+	logg := logger.New(viper.GetString("logger.level"))
 
 	storage := memorystorage.New()
 	calendar := app.New(logg, storage)

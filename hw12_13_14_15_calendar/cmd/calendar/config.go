@@ -1,20 +1,46 @@
 package main
 
-// При желании конфигурацию можно вынести в internal/config.
-// Организация конфига в main принуждает нас сужать API компонентов, использовать
-// при их конструировании только необходимые параметры, а также уменьшает вероятность циклической зависимости.
-type Config struct {
-	Logger LoggerConf
-	// TODO
+import (
+	"bytes"
+	"errors"
+	"fmt"
+	"path"
+	"strings"
+
+	"github.com/spf13/viper"
+)
+
+var defaultConfig = []byte(`
+[logger]
+level = "DEBUG"
+`)
+
+func InitConfig() error {
+	if configFile != "" {
+		return initByFile(configFile)
+	}
+	return initDefault()
 }
 
-type LoggerConf struct {
-	Level string
-	// TODO
+func initByFile(cf string) error {
+	cfDir, cfName := path.Split(cf)
+	viper.SetConfigName(strings.Split(cfName, ".")[0])
+	viper.SetConfigType("toml")
+
+	viper.AddConfigPath(cfDir)
+	viper.AddConfigPath("configs")
+
+	if err := viper.ReadInConfig(); err != nil {
+		var e viper.ConfigFileNotFoundError
+		if errors.As(err, &e) {
+			fmt.Printf("%v. Initing default configuration.\n", err)
+			return initDefault()
+		}
+		return fmt.Errorf("error by reading config file %w", err)
+	}
+	return nil
 }
 
-func NewConfig() Config {
-	return Config{}
+func initDefault() error {
+	return viper.ReadConfig(bytes.NewBuffer(defaultConfig))
 }
-
-// TODO
