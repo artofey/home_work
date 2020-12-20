@@ -23,6 +23,12 @@ func init() {
 	flag.StringVar(&configFile, "config", defaultConfigFile, "Path to configuration file")
 }
 
+func errHandle(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
+
 func main() {
 	flag.Parse()
 
@@ -31,10 +37,12 @@ func main() {
 		return
 	}
 
-	if err := InitConfig(); err != nil {
-		panic(err)
-	}
-	logg := logger.New(viper.GetString("logger.level"))
+	err := InitConfig()
+	errHandle(err)
+
+	logg, err := logger.New(viper.GetString("logger.level"))
+	errHandle(err)
+	defer logg.Sync()
 
 	storage := memorystorage.New()
 	calendar := app.New(logg, storage)
