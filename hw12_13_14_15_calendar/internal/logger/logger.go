@@ -4,21 +4,42 @@ import (
 	"fmt"
 
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+)
+
+var (
+	logLevel = map[string]zapcore.Level{
+		"DEBUG":   zap.DebugLevel,
+		"INFO":    zap.InfoLevel,
+		"WARNING": zap.WarnLevel,
+		"ERROR":   zap.ErrorLevel,
+		"FATAL":   zap.FatalLevel,
+	}
 )
 
 type Logger struct {
-	lvl string
-	zp  *zap.SugaredLogger
+	zp *zap.SugaredLogger
 }
 
-func New(level string) (*Logger, error) {
-	log, err := zap.NewProduction()
+func New(level string, file string) (*Logger, error) {
+	lv, ok := logLevel[level]
+	if !ok {
+		lv = zap.InfoLevel
+	}
+	cfg := zap.Config{
+		Level:            zap.NewAtomicLevelAt(lv),
+		Encoding:         "console",
+		EncoderConfig:    zap.NewDevelopmentEncoderConfig(),
+		OutputPaths:      []string{"stdout", file},
+		ErrorOutputPaths: []string{"stderr", file},
+	}
+
+	log, err := cfg.Build()
 	if err != nil {
 		return nil, fmt.Errorf("init logger error: %w", err)
 	}
 	return &Logger{
-		zp:  log.Sugar(),
-		lvl: level,
+		zp: log.Sugar(),
 	}, nil
 }
 

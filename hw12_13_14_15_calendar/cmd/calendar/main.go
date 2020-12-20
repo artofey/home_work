@@ -40,7 +40,10 @@ func main() {
 	err := InitConfig()
 	errHandle(err)
 
-	logg, err := logger.New(viper.GetString("logger.level"))
+	logg, err := logger.New(
+		viper.GetString("logger.level"),
+		viper.GetString("logger.file"),
+	)
 	errHandle(err)
 	defer logg.Sync()
 

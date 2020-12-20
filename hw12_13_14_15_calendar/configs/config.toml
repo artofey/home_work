@@ -1,5 +1,6 @@
 [logger]
 level = "INFO"
+file = "calendar.log"
 
 # TODO
 # ...
