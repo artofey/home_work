@@ -12,7 +12,16 @@ import (
 
 var defaultConfig = []byte(`
 [logger]
-level = "DEBUG"
+level = "INFO"
+file = "calendar.log"
+
+[db]
+use_db = true
+user = "postgres"
+password = "postgres"
+host = "localhost"
+port = 5432
+dbname = "calendar"
 `)
 
 func InitConfig() error {

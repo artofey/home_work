@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
 	"time"
@@ -12,7 +13,9 @@ import (
 	"github.com/artofey/home_work/hw12_13_14_15_calendar/internal/app"
 	"github.com/artofey/home_work/hw12_13_14_15_calendar/internal/logger"
 	internalhttp "github.com/artofey/home_work/hw12_13_14_15_calendar/internal/server/http"
+	st "github.com/artofey/home_work/hw12_13_14_15_calendar/internal/storage"
 	memorystorage "github.com/artofey/home_work/hw12_13_14_15_calendar/internal/storage/memory"
+	sqlstorage "github.com/artofey/home_work/hw12_13_14_15_calendar/internal/storage/sql"
 )
 
 const defaultConfigFile = "/etc/calendar/config.toml"
@@ -27,6 +30,15 @@ func errHandle(e error) {
 	if e != nil {
 		panic(e)
 	}
+}
+
+func NewEventStorage(is_db bool) (st.EventsStorage, error) {
+	if is_db {
+		fmt.Println("init db storage")
+		return sqlstorage.New()
+	}
+	fmt.Println("init memory storage")
+	return memorystorage.New()
 }
 
 func main() {
@@ -47,7 +59,9 @@ func main() {
 	errHandle(err)
 	defer logg.Sync()
 
-	storage := memorystorage.New()
+	storage, err := NewEventStorage(viper.GetBool("db.use_db"))
+	errHandle(err)
+
 	calendar := app.New(logg, storage)
 
 	server := internalhttp.NewServer(calendar)
