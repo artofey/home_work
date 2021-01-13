@@ -3,20 +3,48 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
 	"time"
 
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/app"
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/logger"
-	internalhttp "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/server/http"
-	memorystorage "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/storage/memory"
+	"github.com/artofey/home_work/hw12_13_14_15_calendar/internal/app"
+	"github.com/artofey/home_work/hw12_13_14_15_calendar/internal/logger"
+	internalhttp "github.com/artofey/home_work/hw12_13_14_15_calendar/internal/server/http"
+	st "github.com/artofey/home_work/hw12_13_14_15_calendar/internal/storage"
+	memorystorage "github.com/artofey/home_work/hw12_13_14_15_calendar/internal/storage/memory"
+	sqlstorage "github.com/artofey/home_work/hw12_13_14_15_calendar/internal/storage/sql"
+	"github.com/spf13/viper"
 )
+
+const defaultConfigFile = "/etc/calendar/config.toml"
 
 var configFile string
 
 func init() {
-	flag.StringVar(&configFile, "config", "/etc/calendar/config.toml", "Path to configuration file")
+	flag.StringVar(&configFile, "config", defaultConfigFile, "Path to configuration file")
+}
+
+func errHandle(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
+
+func NewEventStorage(ctx context.Context, isDB bool) (st.EventsStorage, error) {
+	if isDB {
+		fmt.Println("init db storage")
+		DSN := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
+			viper.GetString("db.user"),
+			viper.GetString("db.password"),
+			viper.GetString("db.host"),
+			viper.GetString("db.port"),
+			viper.GetString("db.dbname"),
+		)
+		return sqlstorage.New(ctx, DSN)
+	}
+	fmt.Println("init memory storage")
+	return memorystorage.New()
 }
 
 func main() {
@@ -27,15 +55,29 @@ func main() {
 		return
 	}
 
-	config := NewConfig()
-	logg := logger.New(config.Logger.Level)
+	err := InitConfig()
+	errHandle(err)
 
-	storage := memorystorage.New()
+	logg, err := logger.New(
+		viper.GetString("logger.level"),
+		viper.GetString("logger.file"),
+	)
+	errHandle(err)
+	defer func() {
+		err := logg.Sync()
+		errHandle(err)
+	}()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	storage, err := NewEventStorage(ctx, viper.GetBool("db.use_db"))
+	errHandle(err)
+	defer storage.Close()
+
 	calendar := app.New(logg, storage)
 
 	server := internalhttp.NewServer(calendar)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	go func() {
 		signals := make(chan os.Signal, 1)
@@ -57,6 +99,6 @@ func main() {
 
 	if err := server.Start(ctx); err != nil {
 		logg.Error("failed to start http server: " + err.Error())
-		os.Exit(1)
+		errHandle(err)
 	}
 }

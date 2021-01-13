@@ -1,5 +1,12 @@
+
 [logger]
 level = "INFO"
+file = "calendar.log"
 
-# TODO
-# ...
+[db]
+use_db = true
+user = "calendar_app"
+password = 12345678
+host = "localhost"
+port = 54321
+dbname = "calendar"

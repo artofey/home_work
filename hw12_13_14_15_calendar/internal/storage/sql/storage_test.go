@@ -1,6 +1,7 @@
-package memorystorage
+package sqlstorage
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -10,8 +11,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMemoryStorage(t *testing.T) {
-	s, err := New()
+func TestSQLStorage(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	s, err := New(ctx, "postgres://calendar_app:12345678@localhost:54321/calendar")
+	require.NoError(t, err)
+	err = s.DeleteAllEvents()
 	require.NoError(t, err)
 
 	d, _ := time.ParseDuration("2h")
@@ -23,7 +28,6 @@ func TestMemoryStorage(t *testing.T) {
 		d,
 		userID,
 	)
-
 	// потытка получить событие по невалидному идентификатору
 	_, err = s.GetEvent(userID)
 	require.True(t, errors.Is(err, st.ErrID))
@@ -44,7 +48,7 @@ func TestMemoryStorage(t *testing.T) {
 
 	// при попытке добавить событие с временем пересекающимся с имеющимися событиями возникает ошибка
 	_, err = s.AddEvent(ev1_13)
-	require.Equal(t, err, st.ErrDateBusy)
+	require.Equal(t, st.ErrDateBusy, err)
 
 	ev1_11 := st.NewEvent(
 		"Тестовое событие 1 февраля 11:00",
