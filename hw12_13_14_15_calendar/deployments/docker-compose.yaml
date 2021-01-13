@@ -1,1 +1,27 @@
 version: "3"
+
+services: 
+  calendar:
+    build:
+      context: ..
+      dockerfile: build/Dockerfile
+    volumes: 
+      - ../migrations:/opt/calendar/migrations
+    working_dir: /opt/calendar
+    command: ./migrations/wait-for-it.sh db:5432 -- ./goose -dir migrations/goose postgres "host=db port=5432 user=calendar_app password=12345678 dbname=calendar sslmode=disable" up && ./calendar-app -config /etc/calendar/config.toml
+    depends_on: 
+    - db
+
+  db:
+    image: postgres
+    ports: 
+      - 54321:5432
+    expose:
+      - 5432
+    environment: 
+      POSTGRES_PASSWORD: postgres
+    volumes: 
+      - ../migrations/init_db.sql:/docker-entrypoint-initdb.d/setup.sql
+      - calendar-db:/var/lib/postgresql/data
+volumes:
+  calendar-db:

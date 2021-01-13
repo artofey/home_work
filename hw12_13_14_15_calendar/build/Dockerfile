@@ -20,6 +20,12 @@ RUN CGO_ENABLED=0 go build \
         -ldflags "$LDFLAGS" \
         -o ${BIN_FILE} cmd/calendar/*
 
+# Собираем бинарник утилиты для миграций
+ENV BIN_FILE_GOOSE /opt/calendar/goose
+RUN CGO_ENABLED=0 go build \
+        -ldflags "$LDFLAGS" \
+        -o ${BIN_FILE_GOOSE} github.com/pressly/goose/cmd/goose
+
 # На выходе тонкий образ
 FROM alpine:3.9
 
@@ -29,8 +35,10 @@ LABEL MAINTAINERS="student@otus.ru"
 
 ENV BIN_FILE "/opt/calendar/calendar-app"
 COPY --from=build ${BIN_FILE} ${BIN_FILE}
+COPY --from=build ${BIN_FILE_GOOSE} ${BIN_FILE_GOOSE}
 
 ENV CONFIG_FILE /etc/calendar/config.toml
 COPY ./configs/config.toml ${CONFIG_FILE}
+# WORKDIR /opt/calendar
 
-CMD ${BIN_FILE} -config ${CONFIG_FILE}
+# CMD ${BIN_FILE} -config ${CONFIG_FILE}
