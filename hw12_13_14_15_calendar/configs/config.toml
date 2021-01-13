@@ -4,8 +4,8 @@ level = "INFO"
 file = "calendar.log"
 
 [db]
-use_db = false
-user = "artem"
+use_db = true
+user = "calendar_app"
 password = 12345678
 host = "localhost"
 port = 54321

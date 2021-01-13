@@ -47,7 +47,7 @@ func (s *MemoryStorage) GetEvent(id st.IDT) (st.Event, error) {
 
 	event, ok := s.st[id]
 	if !ok {
-		return st.Event{}, st.IDError
+		return st.Event{}, st.ErrID
 	}
 	return event, nil
 }
@@ -81,6 +81,13 @@ func (s *MemoryStorage) DeleteEvent(id st.IDT) error {
 	defer s.mu.Unlock()
 
 	delete(s.st, id)
+	return nil
+}
+
+func (s *MemoryStorage) DeleteAllEvents() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.st = make(map[st.IDT]st.Event)
 	return nil
 }
 
@@ -132,25 +139,21 @@ func (s *MemoryStorage) GetMonthEvents(dt time.Time) ([]st.Event, error) {
 	return monthEvents, nil
 }
 
+func (s *MemoryStorage) Close() error {
+	return nil
+}
+
 // Проверка не пересекается ли событие с уже имеющимися.
 func (s *MemoryStorage) permissible(e st.Event) bool {
 	for _, ev := range s.st {
 		start := ev.DateTime
 		finish := ev.DateTime.Add(ev.TimeDuration)
 		// если начало или конец внутри события
-		if timeInsideEvent(start, e) || timeInsideEvent(finish, e) {
+		if st.TimeInsideEvent(start, e) || st.TimeInsideEvent(finish, e) {
 			return false
 		}
 	}
 	return true
-}
-
-func timeInsideEvent(t time.Time, e st.Event) bool {
-	// если время после начала и до конца
-	if t.After(e.DateTime) && t.Before(e.DateTime.Add(e.TimeDuration)) {
-		return true
-	}
-	return false
 }
 
 // New - создает новый инстанс хранилища.
