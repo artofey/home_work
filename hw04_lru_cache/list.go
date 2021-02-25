@@ -1,4 +1,4 @@
-package hw04_lru_cache //nolint:golint,stylecheck
+package hw04lrucache
 
 // List is ...
 type List interface {
@@ -124,5 +124,5 @@ func (l *list) MoveToFront(i *ListItem) {
 
 // NewList is ...
 func NewList() List {
-	return &list{}
+	return new(list)
 }

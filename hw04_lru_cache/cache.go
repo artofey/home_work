@@ -1,4 +1,4 @@
-package hw04_lru_cache //nolint:golint,stylecheck
+package hw04lrucache
 
 import (
 	"sync"
@@ -68,6 +68,6 @@ func NewCache(capacity int) Cache {
 	return &lruCache{
 		capacity: capacity,
 		queue:    NewList(),
-		items:    make(map[Key]*ListItem),
+		items:    make(map[Key]*ListItem, capacity),
 	}
 }
