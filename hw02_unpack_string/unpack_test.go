@@ -7,6 +7,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type test struct {
+	input    string
+	expected string
+	err      error
+}
+
 func TestUnpack(t *testing.T) {
 	for _, tst := range [...]test{
 		{
@@ -49,16 +55,6 @@ func TestUnpack(t *testing.T) {
 			result, err := Unpack(tst.input)
 			require.Equal(t, tst.err, err)
 			require.Equal(t, tst.expected, result)
-		})
-
-	}
-
-	for _, tc := range tests {
-		tc := tc
-		t.Run(tc.input, func(t *testing.T) {
-			result, err := Unpack(tc.input)
-			require.NoError(t, err)
-			require.Equal(t, tc.expected, result)
 		})
 	}
 }
