@@ -34,7 +34,12 @@ func Top10(text string) []string {
 		topWordSlice = append(topWordSlice, TopWord{count: v, word: k})
 	}
 
-	sort.SliceStable(topWordSlice, func(i, j int) bool { return topWordSlice[i].count > topWordSlice[j].count })
+	sort.SliceStable(topWordSlice, func(i, j int) bool {
+		if topWordSlice[i].count == topWordSlice[j].count {
+			return topWordSlice[i].word < topWordSlice[j].word
+		}
+		return topWordSlice[i].count > topWordSlice[j].count
+	})
 	res := make([]string, 0, 10)
 	for i := 0; i <= 9 && i <= len(topWordSlice)-1; i++ {
 		res = append(res, topWordSlice[i].word)
