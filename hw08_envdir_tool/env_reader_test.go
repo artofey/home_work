@@ -28,7 +28,7 @@ func errCheckExist(e error) {
 	}
 }
 
-// Создать данные необходимые для тестов
+// Создать данные необходимые для тестов.
 func makeTestData() {
 	td := "testdata/envequal"
 	err := os.Mkdir(td, 0777)
@@ -96,16 +96,14 @@ with new line`, false},
 
 func TestPrepareEnvVal(t *testing.T) {
 	testCases := map[string]EnvValue{
-		"right_tab\t":  EnvValue{"right_tab", false},
-		"right_space ": EnvValue{"right_space", false},
-		"simple":       EnvValue{"simple", false},
-		`"tests"`:      EnvValue{`"tests"`, false},
-		"":             EnvValue{"", true},
-		"111\x00111":   EnvValue{"111\n111", false},
+		"right_tab\t": {"right_tab", false},
+		"simple":      {"simple", false},
+		`"tests"`:     {`"tests"`, false},
+		"":            {"", true},
+		"111\x00111":  {"111\n111", false},
 	}
 
 	for input, expected := range testCases {
-
 		t.Run(input, func(t *testing.T) {
 			result := prepareEnvVal([]byte(input))
 			require.Equal(t, expected, result)

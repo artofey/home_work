@@ -8,11 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type cmdCases struct {
-	inCMD  []string
-	outStr string
-}
-
 type envCases struct {
 	inEnvs      Environment
 	expectedEnv map[string]string
